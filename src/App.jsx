@@ -3,23 +3,23 @@ import Swal from "sweetalert2";
 import { BinaryTree } from "./classes/arbol";
 import Row from "./Row";
 import { generarId } from "./classes/generarID";
+import { ArbolBinario } from "./classes/ArbolBinario";
 
 function App() {
-  let lista = new BinaryTree();
+  let lista = new ArbolBinario();
 
-  lista.insert(3234, { categoria: "Principiante" });
-  lista.insert(4123, { categoria: "Principiante" });
-  lista.insert(1123, { categoria: "Avanzado" });
-  lista.insert(2343, { categoria: "Intermedio" });
-  lista.insert(6678, { categoria: "Avanzado" });
-  lista.insert(1245, { categoria: "Principiante" });
-  const inorder = lista.postOrderTraversal();
+  lista.insertar({ id: 4123, categoria: "Principiante" });
+  lista.insertar({ id: 1123, categoria: "Avanzado" });
+  lista.insertar({ id: 2343, categoria: "Intermedio" });
+  lista.insertar({ id: 6678, categoria: "Avanzado" });
+  lista.insertar({ id: 1245, categoria: "Principiante" });
+  const inorder = lista.obtenerOrdenados();
 
   const [registro, setRegistro] = useState("");
   const [registros, setRegistros] = useState(inorder);
-  const [buscar, setBuscar] = useState('')
-  const [modificar, setModificar] = useState(false)
-  const [objeto, setObjeto] = useState({})
+  const [buscar, setBuscar] = useState("");
+  const [modificar, setModificar] = useState(false);
+  const [objeto, setObjeto] = useState({});
 
   const guardarRegistro = (e) => {
     e.preventDefault();
@@ -33,91 +33,81 @@ function App() {
       });
       return;
     }
-    if(modificar){
-      
-      lista.updateNode(objeto.id, {categoria: registro})
-      registros.find(usuario => {
-        if(usuario.id === objeto.id){
-          usuario.categoria = registro
+    if (modificar) {
+      lista.actualizarNodo(objeto.id, { categoria: registro });
+      registros.find((usuario) => {
+        if (usuario.id === objeto.id) {
+          usuario.categoria = registro;
         }
-      })
+      });
 
-      setObjeto({})
-      setRegistro('')
-      setModificar(false)
+      setObjeto({});
+      setRegistro("");
+      setModificar(false);
       Swal.fire({
-        title: 'usuario actualizado',
-        icon: 'success'
-      })
-      return
+        title: "usuario actualizado",
+        icon: "success",
+      });
+      return;
     }
 
-    lista.insert(generarId(), { categoria: registro });
-
-    const listaOrdenada = lista.inOrderTraversal();
-    const nuevoRegistro = listaOrdenada[listaOrdenada.length - 1];
-    console.log(nuevoRegistro);
-    setRegistros([...registros, nuevoRegistro]);
-    setRegistro('')
+    const nuevoId = generarId();
+    const nuevoObjeto = { id: nuevoId, categoria: registro };
+   
+    lista.insertar(nuevoObjeto)
+    
+    setRegistros([...registros, nuevoObjeto]);
+    setRegistro("");
     Swal.fire({
       title: "Registro guardado exitosamente",
       icon: "success",
     });
+    
   };
 
   function listaOrdenada() {
-    const listaOrdenada = lista.inOrderTraversal();
-    setRegistros(listaOrdenada);
-    
+    const listaOrdenada = lista.obtenerOrdenados();
+    console.log(listaOrdenada)
+    setRegistros([...listaOrdenada]); // Actualiza el estado de registros con la lista ordenada
   }
 
-  function listaPreorder() {
-    const listaPreorder = lista.preOrderTraversal();
-    setRegistros(listaPreorder);
-  }
 
-  function listaPosorder() {
-    const listaPosorder = lista.postOrderTraversal();
-    setRegistros(listaPosorder);
-  }
 
-  function buscarFolio(){
+  function buscarFolio() {
     let numero = buscar;
-  
+
     if (!numero || buscar === "") {
       setRegistros(inorder);
       return;
     }
-  
+
     const arreglo = registros.filter((usuario) => usuario.id == numero);
-    if(arreglo.length === 0){
-      return
-    }else{
+    if (arreglo.length === 0) {
+      return;
+    } else {
       setRegistros(arreglo);
     }
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     if (buscar === "") {
       setRegistros(inorder);
       return;
     }
-  },[buscar])
-
+  }, [buscar]);
 
   const eliminarRegistro = (id) => {
-    lista.deleteNode(id)
+    lista.eliminarNodo(id);
     const guardar = () => {
-      const nuevoRegistros = registros.filter(usuario => usuario.id !== id)
-      setRegistros(nuevoRegistros)
+      const nuevoRegistros = registros.filter((usuario) => usuario.id !== id);
+      setRegistros(nuevoRegistros);
       Swal.fire({
-        title: 'registro eliminado',
-        icon: 'success'
-      })
-    }
-    guardar()
-  }
-
+        title: "registro eliminado",
+        icon: "success",
+      });
+    };
+    guardar();
+  };
 
   return (
     <main className="bg-slate-800 h-screen flex justify-center items-center flex-col">
@@ -127,18 +117,7 @@ function App() {
       >
         Lista ordenada
       </button>
-      <button
-        onClick={listaPosorder}
-        className="fixed left-5 top-[150px] w-[200px] p-2 rounded bg-slate-600 text-white font-semibold"
-      >
-        Posorder
-      </button>
-      <button
-        onClick={listaPreorder}
-        className="fixed left-5 top-[250px] w-[200px] p-2 rounded bg-slate-600 text-white font-semibold"
-      >
-        Preorder
-      </button>
+
       <form
         onSubmit={guardarRegistro}
         className="flex flex-col p-20 bg-slate-900 text-white rounded-xl"
@@ -161,11 +140,18 @@ function App() {
         />
       </form>
       {/* <div className="flex justify-center items-center"> */}
-        <h1 className="text-3xl text-white font-semibold mt-5">Folio</h1>
-        <input type="number" className="rounded outline-slate-500 p-1" 
-          onChange={e=> setBuscar(e.target.value)}
-        />
-        <button className="bg-slate-700 p-2 text-xl font-semibold text-white mt-5" onClick={buscarFolio}>Buscar</button>
+      <h1 className="text-3xl text-white font-semibold mt-5">Folio</h1>
+      <input
+        type="number"
+        className="rounded outline-slate-500 p-1"
+        onChange={(e) => setBuscar(e.target.value)}
+      />
+      <button
+        className="bg-slate-700 p-2 text-xl font-semibold text-white mt-5"
+        onClick={buscarFolio}
+      >
+        Buscar
+      </button>
       {/* </div> */}
 
       <section className="w-full max-h-[200px] flex mt-5 px-20 overflow-y-scroll">
